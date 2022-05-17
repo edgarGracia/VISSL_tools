@@ -14,7 +14,8 @@ from vissl.utils.hydra_config import compose_hydra_configuration, convert_to_att
 
 class Predictor:
 
-    def __init__(self, model_config: dict, weights_path: Union[str, Path]):
+    def __init__(self, model_config: Union[str, Path],
+        weights_path: Union[str, Path]):
 
         self.model_config = model_config
         self.weights_path = str(weights_path)
@@ -94,8 +95,9 @@ def predict_images_on_path(predictor: Predictor, in_path: Path,
             else:
                 print(str(img_path),"\n",pred)
         else:
+            rec_out = out_path / img_path.name if out_path is not None else None
             predict_images_on_path(predictor, img_path,
-                out_path / img_path.name)
+                rec_out)
 
 
 if __name__ == "__main__":
