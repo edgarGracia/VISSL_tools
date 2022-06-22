@@ -38,7 +38,7 @@ def load_data(root_path: Path, layer: str = "heads", subsample: int = -1,
 
 
 def plot_tsne(x: np.ndarray, y: np.ndarray, out_path: Path = None,
-    scale: bool = True, title: str = None):
+    scale: bool = True, title: str = None, label_map: dict = None):
     
     palette = sns.color_palette("colorblind", len(set(y)))
 
@@ -47,6 +47,9 @@ def plot_tsne(x: np.ndarray, y: np.ndarray, out_path: Path = None,
 
     tsne = TSNE()
     X_embedded = tsne.fit_transform(x)
+
+    if label_map is not None:
+        y = [label_map[i] for i in y]
     
     plot = sns.scatterplot(
         X_embedded[:,0],
@@ -67,7 +70,7 @@ def plot_tsne(x: np.ndarray, y: np.ndarray, out_path: Path = None,
     
 
 def plot_umap(x: np.ndarray, y: np.ndarray, out_path: Path = None,
-    scale: bool = True, title: str = None):
+    scale: bool = True, title: str = None, label_map: dict = None):
     
     import umap # pip install umap-learn
     
@@ -79,6 +82,9 @@ def plot_umap(x: np.ndarray, y: np.ndarray, out_path: Path = None,
     reducer = umap.UMAP()
     embedding = reducer.fit_transform(x)
     
+    if label_map is not None:
+        y = [label_map[i] for i in y]
+
     plot = sns.scatterplot(
         embedding[:,0],
         embedding[:,1],
@@ -96,12 +102,6 @@ def plot_umap(x: np.ndarray, y: np.ndarray, out_path: Path = None,
         plt.show()
     plt.close()
 
-
-def class_names_to_index(index_map_file:Path, class_names: list) -> list:
-    with open(index_map_file, "r") as f:
-        labels = json.load(f)
-    class_idx = [labels[i] for i in class_names]
-    return class_idx
 
 
 if __name__ == "__main__":
@@ -168,25 +168,40 @@ if __name__ == "__main__":
         type=int,
         help="Random seed"
     )
+    parser.add_argument(
+        "--set",
+        default="test",
+        help='Data set. "train" or "test". Default to "test"'
+    )
 
     args = parser.parse_args()
     
+    # Set random seed
     if args.seed is not None:
         random.seed(args.seed)
 
-    if args.classes is not None:
-        classes = class_names_to_index(args.label_map, args.classes.split(","))
-    else:
-        classes = None
+    # Get class names
+    id_labels, classes = None, None
+    if args.label_map is not None:
+        with open(args.label_map, "r") as f:
+            labels_id = json.load(f)
+        id_labels = {v:k for k,v in labels_id.items()}
+        
+        # Filter classes to plot
+        if args.classes is not None:
+            classes = [labels_id[i] for i in args.classes.split(",")]
     
     x, y = load_data(root_path=args.features, layer=args.layer, 
-        subsample=args.subsample, classes=classes, seed=args.seed)
+        subsample=args.subsample, classes=classes, seed=args.seed,
+        split=args.set)
 
     if args.tsne:
         out = (args.output.parent.joinpath("tsne_" + args.output.name)
             if args.umap and args.output is not None else args.output)
-        plot_tsne(x, y, out_path=out, scale=args.scale, title=args.title)
+        plot_tsne(x, y, out_path=out, scale=args.scale, title=args.title,
+            label_map=id_labels)
     if args.umap:
         out = (args.output.parent.joinpath("umap_" + args.output.name)
             if args.tsne and args.output is not None else args.output)
-        plot_umap(x, y, out_path=out, scale=args.scale, title=args.title)
+        plot_umap(x, y, out_path=out, scale=args.scale, title=args.title,
+            label_map=id_labels)
