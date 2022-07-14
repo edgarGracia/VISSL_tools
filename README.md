@@ -1,7 +1,7 @@
 # VISSL_tools
 
 ## Train a custom dataset on a single GPU
-1. Copy the content of ```./config``` to ```~/vissl/configs/config/my/```
+1. Copy the content of ```./configs``` to ```~/vissl/configs/config/my/```
 2. Copy the content of ```./tools``` to ```~/vissl/tools/my/```
 4. Download the [RN50](https://download.pytorch.org/models/resnet50-19c8e357.pth) pretrained weights to ```~/vissl/pretrained_models/```
 5. Open ```~/vissl/configs/config/dataset_catalog.json``` and add the paths to the datasets
