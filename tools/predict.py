@@ -106,7 +106,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-c",
         "--config",
-        default='pretrain/simclr/simclr_8node_resnet.yaml',
+        default='../../configs/config/my/resnet_feature_extraction.yaml',
         type=Path,
     )
     parser.add_argument(
