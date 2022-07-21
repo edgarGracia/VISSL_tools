@@ -106,7 +106,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-c",
         "--config",
-        default='../../configs/config/my/resnet_feature_extraction.yaml',
+        default='my/resnet_feature_extraction.yaml',
         type=Path,
     )
     parser.add_argument(
