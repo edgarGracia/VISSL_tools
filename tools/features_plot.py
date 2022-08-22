@@ -91,6 +91,7 @@ def plot(embedding: np.ndarray, y: np.ndarray, out_path: Path = None,
         plt.axis('scaled')
 
     if out_path is not None:
+        out_path.parent.mkdir(exist_ok=True, parents=True)
         plt.savefig(str(out_path))
     else:
         plt.show()
@@ -168,12 +169,12 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--xlim",
-        default=None
+        default=None,
         help='Set the x axis range. e.g. "0,10"'
     )
     parser.add_argument(
         "--ylim",
-        default=None
+        default=None,
         help='Set the y axis range. e.g. "0,10"'
     )
     parser.add_argument(
