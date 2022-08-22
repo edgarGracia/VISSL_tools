@@ -37,44 +37,20 @@ def load_data(root_path: Path, layer: str = "heads", subsample: int = -1,
     return x, y
 
 
-def plot_tsne(x: np.ndarray, y: np.ndarray, out_path: Path = None,
-    scale: bool = True, title: str = None, label_map: dict = None):
+def tsne(x: np.ndarray, scale: bool = True) -> np.ndarray:
     
-    palette = sns.color_palette("colorblind", len(set(y)))
-
     if scale:
         x = StandardScaler().fit_transform(x)
 
     tsne = TSNE()
-    X_embedded = tsne.fit_transform(x)
-
-    if label_map is not None:
-        y = [label_map[i] for i in y]
+    embedding = tsne.fit_transform(x)
     
-    plot = sns.scatterplot(
-        X_embedded[:,0],
-        X_embedded[:,1],
-        hue=y,
-        legend='full',
-        palette=palette
-    )
-
-    if title is not None:
-        plot.set_title(title)
-
-    if out_path is not None:
-        plt.savefig(str(out_path))
-    else:
-        plt.show()
-    plt.close()
+    return embedding
     
 
-def plot_umap(x: np.ndarray, y: np.ndarray, out_path: Path = None,
-    scale: bool = True, title: str = None, label_map: dict = None):
+def umap(x: np.ndarray, scale: bool = True) -> np.ndarray:
     
     import umap # pip install umap-learn
-    
-    palette = sns.color_palette("colorblind", len(set(y)))
     
     if scale:
         x = StandardScaler().fit_transform(x)
@@ -82,9 +58,18 @@ def plot_umap(x: np.ndarray, y: np.ndarray, out_path: Path = None,
     reducer = umap.UMAP()
     embedding = reducer.fit_transform(x)
     
+    return embedding
+
+
+def plot(embedding: np.ndarray, y: np.ndarray, out_path: Path = None,
+    title: str = None, label_map: dict = None, xlim: list = None,
+    ylim: list = None, scaled_plot: bool = False):
+
+    palette = sns.color_palette("colorblind", len(set(y)))
+
     if label_map is not None:
         y = [label_map[i] for i in y]
-
+    
     plot = sns.scatterplot(
         embedding[:,0],
         embedding[:,1],
@@ -92,16 +77,24 @@ def plot_umap(x: np.ndarray, y: np.ndarray, out_path: Path = None,
         legend='full',
         palette=palette
     )
-    
+
     if title is not None:
         plot.set_title(title)
+
+    if xlim is not None:
+        plt.xlim(xlim)
+    
+    if ylim is not None:
+        plt.ylim(ylim)
+    
+    if scaled_plot:
+        plt.axis('scaled')
 
     if out_path is not None:
         plt.savefig(str(out_path))
     else:
         plt.show()
     plt.close()
-
 
 
 if __name__ == "__main__":
@@ -173,12 +166,33 @@ if __name__ == "__main__":
         default="test",
         help='Data set. "train" or "test". Default to "test"'
     )
+    parser.add_argument(
+        "--xlim",
+        default=None
+        help='Set the x axis range. e.g. "0,10"'
+    )
+    parser.add_argument(
+        "--ylim",
+        default=None
+        help='Set the y axis range. e.g. "0,10"'
+    )
+    parser.add_argument(
+        "--scaled-plot",
+        action="store_true",
+        help="Maintain the same scale on x and y axis"
+    )
 
     args = parser.parse_args()
     
     # Set random seed
     if args.seed is not None:
         random.seed(args.seed)
+
+    xlim = ([int(i) for i in args.xlim.split(",")]
+        if args.xlim is not None else None)
+    
+    ylim = ([int(i) for i in args.ylim.split(",")]
+        if args.ylim is not None else None)
 
     # Get class names
     id_labels, classes = None, None
@@ -198,10 +212,34 @@ if __name__ == "__main__":
     if args.tsne:
         out = (args.output.parent.joinpath("tsne_" + args.output.name)
             if args.umap and args.output is not None else args.output)
-        plot_tsne(x, y, out_path=out, scale=args.scale, title=args.title,
-            label_map=id_labels)
+        embedding = tsne(
+            x=x,
+            scale=args.scale
+        )
+        plot(
+            embedding=embedding,
+            y=y,
+            out_path=out,
+            title=args.title,
+            label_map=id_labels,
+            xlim=xlim,
+            ylim=ylim,
+            scaled_plot=args.scaled_plot
+        )
     if args.umap:
         out = (args.output.parent.joinpath("umap_" + args.output.name)
             if args.tsne and args.output is not None else args.output)
-        plot_umap(x, y, out_path=out, scale=args.scale, title=args.title,
-            label_map=id_labels)
+        embedding = umap(
+            x=x,
+            scale=args.scale
+        )
+        plot(
+            embedding=embedding,
+            y=y,
+            out_path=out,
+            title=args.title,
+            label_map=id_labels,
+            xlim=xlim,
+            ylim=ylim,
+            scaled_plot=args.scaled_plot
+        )
